@@ -17,7 +17,6 @@ And add the following line:
 ```java
 Analytics analytics = new Analytics.Builder(this, "write_key")
                 .use(BatchIntegration.FACTORY)
-                .logLevel(Analytics.LogLevel.VERBOSE)
                 .build();
 ```
 
