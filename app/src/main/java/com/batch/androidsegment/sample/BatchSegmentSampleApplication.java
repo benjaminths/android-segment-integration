@@ -20,7 +20,7 @@ public class BatchSegmentSampleApplication extends Application
 
         Analytics analytics = new Analytics.Builder(this, SEGMENT_WRITE_KEY)
                 .defaultOptions(options)
-                .use(BatchIntegration.FACTORY)
+                .use(BatchIntegration.getFactory(this))
                 .logLevel(Analytics.LogLevel.VERBOSE)
                 .build();
         Analytics.setSingletonInstance(analytics);

@@ -29,26 +29,10 @@ public class MainActivity extends BaseActivity
             @Override
             public void onClick(View v)
             {
-                final JSONObject data = new JSONObject();
-
-                final JSONArray foo = new JSONArray();
-                foo.put("bar");
-                foo.put("barre");
-
-                try
-                {
-                    data.put("foo", foo);
-                    data.put("number", 2);
-                }
-                catch (JSONException e)
-                {
-                    e.printStackTrace();
-                }
-
-                Properties trackProperties = new Properties();
-                trackProperties.putValue(BatchIntegration.TRANSACTION_PROPERTIES_AMOUNT, 12);
-                trackProperties.put(BatchIntegration.TRACK_DATA_KEY, data);
-                Analytics.with(MainActivity.this).track(BatchIntegration.TRACK_TRANSACTION, trackProperties);
+                Analytics.with(MainActivity.this).track(
+                        "MyTransaction",
+                        new Properties().putTotal(57.5d)
+                );
             }
         });
 
@@ -57,20 +41,10 @@ public class MainActivity extends BaseActivity
             @Override
             public void onClick(View v)
             {
-                final JSONObject data = new JSONObject();
-                try
-                {
-                    data.put("data_example", true);
-                }
-                catch (JSONException e)
-                {
-                    e.printStackTrace();
-                }
-
-                Properties trackProperties = new Properties();
-                trackProperties.putTitle("MyTrackPropertiesTitle");
-                trackProperties.putValue(BatchIntegration.TRACK_DATA_KEY, data); // Could be removed
-                Analytics.with(MainActivity.this).track("MyEventName", trackProperties);
+                Analytics.with(MainActivity.this).track(
+                        "MyEvent",
+                        new Properties().putName("Toto")
+                );
             }
         });
 
@@ -81,7 +55,7 @@ public class MainActivity extends BaseActivity
             public void onClick(View v)
             {
                 String name = etName.getText().toString();
-                Analytics.with(MainActivity.this).identify(Batch.User.getInstallationID(), new Traits().putName(name), null);
+                Analytics.with(MainActivity.this).identify("MyCustomUserId", new Traits().putName(name), null);
             }
         });
     }
