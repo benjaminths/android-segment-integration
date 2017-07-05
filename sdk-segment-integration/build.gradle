@@ -29,7 +29,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
 
     provided 'com.segment.analytics.android:analytics:4.2.6'
-    compile 'com.batch.android:batch-sdk:1.8+'
+    compile 'com.batch.android:batch-sdk:1.9.1'
     compile 'com.google.android.gms:play-services-base:10.2.4'
     compile 'com.google.android.gms:play-services-gcm:10.2.4'
     compile 'com.google.android.gms:play-services-ads:10.2.4'
