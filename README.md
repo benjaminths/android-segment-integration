@@ -1,7 +1,7 @@
 analytics-android-integration-batch
 ======================================
 
-Batch integration for [analytics-android](https://github.com/segmentio/analytics-android).
+Batch.com integration for [analytics-android](https://github.com/segmentio/analytics-android).
 
 ## Usage
 
