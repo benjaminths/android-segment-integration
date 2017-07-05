@@ -1,52 +1,74 @@
 package com.segment.analytics.android.integrations.batch;
 
-import com.segment.analytics.integrations.Logger;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.text.TextUtils;
 
-class BatchIntegrationConfig
+public class BatchIntegrationConfig
 {
-    boolean canUseAndroidID = false;
-    boolean canUseAdvertisingID = false;
-    boolean canUseAdvancedDeviceInformation = false;
-    boolean canUseGoogleInstanceID = false;
-    boolean autoBatchStartStop = false;
-    String apiKey;
-    String gcmSenderId;
-    Logger logger;
+    private static final String PREFERENCES_NAME = "batchSegmentPreferences";
 
-    BatchIntegrationConfig(String apiKey, String gcmSenderId, Logger logger)
+    public static final String BATCH_API_KEY = "apiKey";
+    public static final String GCM_SENDER_ID_KEY = "gcmSenderId";
+    public static final String CAN_USE_ADVERTISING_ID_KEY = "canUseAdvertisingID";
+    public static final String CAN_USE_ADVANCED_DEVICE_INFO_KEY = "canUseAdvancedDeviceInformation";
+
+    public static final boolean DEFAULT_CAN_USE_ADVERTISING_ID = true;
+    public static final boolean DEFAULT_CAN_USE_ADV_DEVICE_INFO = true;
+
+    public static boolean enableAutomaticLifecycleManagement = true;
+
+    String apiKey;
+    String gcmSenderID;
+    boolean canUseAdvertisingID = DEFAULT_CAN_USE_ADVERTISING_ID;
+    boolean canUseAdvancedDeviceInformation = DEFAULT_CAN_USE_ADV_DEVICE_INFO;
+
+    BatchIntegrationConfig(String apiKey)
     {
         this.apiKey = apiKey;
-        this.gcmSenderId = gcmSenderId;
-        this.logger = logger;
     }
 
-    BatchIntegrationConfig setCanUseAndroidID(boolean canUseAndroidID)
+    public static BatchIntegrationConfig loadConfig(Context context)
     {
-        this.canUseAndroidID = canUseAndroidID;
-        return this;
+        SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        BatchIntegrationConfig config = new BatchIntegrationConfig(
+                preferences.getString(BATCH_API_KEY, null)
+        );
+        config.gcmSenderID = preferences.getString(GCM_SENDER_ID_KEY, null);
+        config.canUseAdvertisingID = preferences.getBoolean(CAN_USE_ADVERTISING_ID_KEY, config.canUseAdvertisingID);
+        config.canUseAdvancedDeviceInformation = preferences.getBoolean(CAN_USE_ADVANCED_DEVICE_INFO_KEY, config.canUseAdvancedDeviceInformation);
+
+        if (config.isValid())
+        {
+            return config;
+        }
+        else
+        {
+            return null;
+        }
     }
 
-    BatchIntegrationConfig setCanUseAdvertisingID(boolean canUseAdvertisingID)
+    /**
+     A valid config is a config with a non empty API Key
+     */
+    public boolean isValid()
     {
-        this.canUseAdvertisingID = canUseAdvertisingID;
-        return this;
+        return !TextUtils.isEmpty(apiKey);
     }
 
-    BatchIntegrationConfig setCanUseAdvancedDeviceInformation(boolean canUseAdvancedDeviceInformation)
+    public void save(Context context)
     {
-        this.canUseAdvancedDeviceInformation = canUseAdvancedDeviceInformation;
-        return this;
-    }
+        if (!isValid())
+        {
+            // Don't bother saving a config with no API Key
+            return;
+        }
 
-    BatchIntegrationConfig setCanUseGoogleInstanceID(boolean canUseGoogleInstanceID)
-    {
-        this.canUseGoogleInstanceID = canUseGoogleInstanceID;
-        return this;
-    }
-
-    BatchIntegrationConfig setAutoBatchStartStop(boolean autoBatchStartStop)
-    {
-        this.autoBatchStartStop = autoBatchStartStop;
-        return this;
+        context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE).edit()
+                .putBoolean(CAN_USE_ADVERTISING_ID_KEY, canUseAdvertisingID)
+                .putBoolean(CAN_USE_ADVANCED_DEVICE_INFO_KEY, canUseAdvancedDeviceInformation)
+                .putString(BATCH_API_KEY, apiKey)
+                .putString(GCM_SENDER_ID_KEY, gcmSenderID)
+                .apply();
     }
 }

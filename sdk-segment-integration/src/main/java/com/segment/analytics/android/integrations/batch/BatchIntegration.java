@@ -1,73 +1,111 @@
 package com.segment.analytics.android.integrations.batch;
 
 import android.app.Activity;
-import android.location.Location;
+import android.content.Context;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.batch.android.Batch;
-import com.batch.android.BatchUserDataEditor;
 import com.batch.android.Config;
+import com.batch.android.json.JSONException;
 import com.batch.android.json.JSONObject;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
+import com.segment.analytics.integrations.Logger;
+import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public class BatchIntegration extends Integration
 {
-    public static final Factory FACTORY = new Integration.Factory()
+    public static final String BATCH_KEY = "Batch.com";
+
+    private static final String LOGGER_TAG = "BatchSegmentIntegration";
+    
+    private static boolean didSetBatchConfig = false;
+
+    private Logger logger;
+
+    public static Factory getFactory(Context context)
     {
-        @Override
-        public Integration<?> create(ValueMap settings, Analytics analytics)
+        final Context appContext = context.getApplicationContext();
+        // Try to restore the saved configuration if any
+        setupBatch(BatchIntegrationConfig.loadConfig(appContext));
+
+        return new Factory()
         {
-            BatchIntegrationConfig config = new BatchIntegrationConfig(
-                    settings.getString("batch_api_key"),
-                    settings.getString("gcm_key"),
-                    analytics.logger(BATCH_KEY)
-            );
+            @Override
+            public Integration<?> create(ValueMap settings, Analytics analytics)
+            {
+                BatchIntegrationConfig config = new BatchIntegrationConfig(
+                        settings.getString(BatchIntegrationConfig.BATCH_API_KEY)
+                );
 
-            config.setAutoBatchStartStop(settings.getBoolean("autoStartStop", true));
+                config.canUseAdvertisingID = settings.getBoolean(BatchIntegrationConfig.CAN_USE_ADVERTISING_ID_KEY, BatchIntegrationConfig.DEFAULT_CAN_USE_ADVERTISING_ID);
+                config.canUseAdvancedDeviceInformation = settings.getBoolean(BatchIntegrationConfig.CAN_USE_ADVANCED_DEVICE_INFO_KEY, BatchIntegrationConfig.DEFAULT_CAN_USE_ADV_DEVICE_INFO);
+                config.gcmSenderID = settings.getString(BatchIntegrationConfig.GCM_SENDER_ID_KEY);
+                
+                config.save(appContext);
+                setupBatch(config);
 
-            return new BatchIntegration(config);
-        }
+                return new BatchIntegration(analytics.logger(BATCH_KEY));
+            }
 
-        @Override
-        public String key()
-        {
-            return BATCH_KEY;
-        }
-    };
-
-    public static final String BATCH_KEY = "Batch";
-
-    // Event keys
-    public static final String TRACK_DATA_KEY = "track_data";
-    public static final String TRACK_TRANSACTION = "transaction";
-    public static final String TRACK_LOCATION = "location";
-    public static final String TRANSACTION_PROPERTIES_AMOUNT = "amount";
-
-    private final BatchIntegrationConfig integrationConfig;
-
-    BatchIntegration(BatchIntegrationConfig config)
-    {
-        this.integrationConfig = config;
-        initializeBatch();
+            @Override
+            public String key()
+            {
+                return BATCH_KEY;
+            }
+        };
     }
 
-    private void initializeBatch()
+    public static void setupBatch(BatchIntegrationConfig integrationConfig)
     {
-        Batch.Push.setGCMSenderId(integrationConfig.gcmSenderId);
+        if (integrationConfig == null)
+        {
+            return;
+        }
 
+        if (didSetBatchConfig)
+        {
+            // Config updates are delayed to the next app start
+            return;
+        }
+
+        if (!BatchIntegrationConfig.enableAutomaticLifecycleManagement)
+        {
+            Log.v(LOGGER_TAG, "Batch will not use the settings provided by segment, because it has been disabled by the developer.");
+            return;
+        }
+        
+        if (!integrationConfig.isValid())
+        {
+            Log.v(LOGGER_TAG, "The configuration fetched from segment is invalid or incomplete. sBatch will not be automatically configured, and might not work properly.");
+            return;
+        }
+        
         Config config = new Config(integrationConfig.apiKey);
-        config.setCanUseAndroidID(integrationConfig.canUseAndroidID)
-                .setCanUseAdvertisingID(integrationConfig.canUseAdvertisingID)
-                .setCanUseAdvancedDeviceInformation(integrationConfig.canUseAdvancedDeviceInformation)
-                .setCanUseInstanceID(integrationConfig.canUseGoogleInstanceID);
+        config.setCanUseAdvertisingID(integrationConfig.canUseAdvertisingID);
+        config.setCanUseAdvancedDeviceInformation(integrationConfig.canUseAdvancedDeviceInformation);
+
+        if (!TextUtils.isEmpty(integrationConfig.gcmSenderID))
+        {
+            Batch.Push.setGCMSenderId(integrationConfig.gcmSenderID);
+        }
 
         Batch.setConfig(config);
+        didSetBatchConfig = true;
+    }
+
+    BatchIntegration(Logger logger)
+    {
+        this.logger = logger;
     }
 
     @Override
@@ -80,89 +118,116 @@ public class BatchIntegration extends Integration
         if (eventName == null || eventName.isEmpty())
         {
             String err = "Tried to track location but given location is null";
-            integrationConfig.logger.error(new BatchSegmentIntegrationException(err), err);
+            logger.error(new BatchSegmentIntegrationException(err), err);
         }
         else
         {
-            switch (eventName)
-            {
-                case TRACK_LOCATION:
-                    trackLocation(track);
-                    break;
-                case TRACK_TRANSACTION:
-                    trackTransaction(track);
-                    break;
-                default:
-                    trackEvent(track, eventName);
-            }
+            eventName = formatEventName(eventName);
+            trackEvent(track, eventName);
         }
     }
 
-    private void trackLocation(TrackPayload track)
+    private static String formatEventName(String name)
     {
-        Location loc = (Location) track.properties().get(TRACK_LOCATION);
-        if (loc != null)
-        {
-            Batch.User.trackLocation(loc);
-            integrationConfig.logger.verbose("BatchIntegration : tracking location event");
-        }
-        else
-        {
-            String err = "Tried to track location but given location is null";
-            integrationConfig.logger.error(new BatchSegmentIntegrationException(err), err);
-        }
+        name = name.replaceAll("(?<!^|[A-Z])[A-Z]", "_$0");
+        name = name.replaceAll("^a-zA-Z0-9", "_");
+        name = name.replaceAll("_+", "_");
+        name = name.substring(0, Math.min(name.length(), 30));
+        return name.toUpperCase(Locale.US);
     }
 
     private void trackTransaction(TrackPayload track)
     {
-        double amount = track.properties().getDouble(TRANSACTION_PROPERTIES_AMOUNT, Integer.MIN_VALUE);
-        if (amount != Integer.MIN_VALUE)
+        double amount = track.properties().total();
+
+        String currency = track.properties().currency();
+        if (currency != null && !currency.isEmpty())
         {
-            JSONObject data = (JSONObject) track.properties().get(TRACK_DATA_KEY);
-            Batch.User.trackTransaction(amount, data);
-            integrationConfig.logger.verbose("BatchIntegration : tracking transaction event");
+            logger.verbose("Batch does not handle currency on transaction events");
         }
-        else
-        {
-            String err = "Tried to track transaction but no amount given";
-            integrationConfig.logger.error(new BatchSegmentIntegrationException(err), err);
-        }
+
+        Batch.User.trackTransaction(amount);
+        logger.verbose("Tracking transaction event");
     }
 
     private void trackEvent(TrackPayload track, String eventName)
     {
         String label = track.properties().title();
-        JSONObject data = (JSONObject) track.properties().get(TRACK_DATA_KEY);
-        Batch.User.trackEvent(eventName, label, data);
-        integrationConfig.logger.verbose("BatchIntegration : tracking event (name : " + eventName + ")");
+        logger.verbose("Tracking event (name : " + eventName + ")");
+
+        JSONObject datas = new JSONObject();
+        try
+        {
+            Set<Map.Entry<String, Object>> entries = track.properties().entrySet();
+            for (Map.Entry<String, Object> entry : entries)
+            {
+                String value = entry.getValue().toString();
+                if (value != null && !value.isEmpty() && !"0".equals(value))
+                {
+                    datas.put(entry.getKey(), entry.toString());
+                }
+            }
+        }
+        catch (JSONException ex)
+        {
+            logger.error(ex, "Track event error");
+        }
+
+        Batch.User.trackEvent(eventName, label, datas);
+
+        if (track.properties().total() != 0)
+        {
+            trackTransaction(track);
+        }
     }
 
     @Override
     public void identify(IdentifyPayload identify)
     {
-        super.identify(identify);
-
-        BatchUserDataEditor batchUserEditor = Batch.User.editor();
+        logger.verbose("Identifying user");
 
         String userId = identify.userId();
-        if (userId != null && !userId.isEmpty())
+        if (userId == null || userId.isEmpty())
         {
-            batchUserEditor.setIdentifier(userId);
+            logger.verbose("User not identified, userId is null or empty");
+            return;
         }
 
-        Set<Map.Entry<String, Object>> entries = identify.traits().entrySet();
-        for (Map.Entry<String, Object> entry : entries)
+        Batch.User.editor().setIdentifier(userId).save();
+    }
+
+    @Override
+    public void reset()
+    {
+        logger.verbose("Resetting user");
+        Batch.User.editor()
+                .setIdentifier(null)
+                .clearTags()
+                .clearAttributes()
+                .save();
+    }
+
+    @Override
+    public void screen(ScreenPayload screen)
+    {
+        logger.verbose("Tracking screen event");
+        final String name = screen.name();
+        if (!TextUtils.isEmpty(name))
         {
-            String value = entry.getValue().toString();
-            if (value != null && !value.isEmpty())
-            {
-                batchUserEditor.setAttribute(entry.getKey(), entry.toString());
-            }
+            Batch.User.trackEvent("SEGMENT_SCREEN", name);
+        }
+    }
+
+    @Override
+    public void group(GroupPayload group)
+    {
+        String groupId = group.groupId();
+        if (groupId == null || groupId.isEmpty())
+        {
+            return;
         }
 
-        batchUserEditor.save();
-
-        integrationConfig.logger.verbose("BatchIntegration : user identified");
+        Batch.User.editor().setAttribute("SEGMENT_GROUP", groupId).save();
     }
 
     @Override
@@ -170,20 +235,20 @@ public class BatchIntegration extends Integration
     {
         super.onActivityStarted(activity);
 
-        if (integrationConfig.autoBatchStartStop)
+        if (BatchIntegrationConfig.enableAutomaticLifecycleManagement)
         {
             Batch.onStart(activity);
-            integrationConfig.logger.verbose("BatchIntegration : Batch started in activity");
+            logger.verbose("Batch started in activity " + activity.getLocalClassName());
         }
     }
 
     @Override
     public void onActivityStopped(Activity activity)
     {
-        if (integrationConfig.autoBatchStartStop)
+        if (BatchIntegrationConfig.enableAutomaticLifecycleManagement)
         {
             Batch.onStop(activity);
-            integrationConfig.logger.verbose("BatchIntegration : Batch stopped in activity");
+            logger.verbose("Batch stopped in " + activity.getLocalClassName());
         }
 
         super.onActivityStopped(activity);
@@ -192,10 +257,10 @@ public class BatchIntegration extends Integration
     @Override
     public void onActivityDestroyed(Activity activity)
     {
-        if (integrationConfig.autoBatchStartStop)
+        if (BatchIntegrationConfig.enableAutomaticLifecycleManagement)
         {
             Batch.onDestroy(activity);
-            integrationConfig.logger.verbose("BatchIntegration : Batch destroyed in activity");
+            logger.verbose("Batch destroyed in " + activity.getLocalClassName());
         }
 
         super.onActivityDestroyed(activity);
