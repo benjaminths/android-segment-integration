@@ -51,7 +51,7 @@ public class BatchIntegration extends Integration
             public Integration<?> create(ValueMap settings, Analytics analytics)
             {
                 BatchIntegrationConfig config = new BatchIntegrationConfig(
-                        settings.getString(BatchIntegrationConfig.BATCH_API_KEY)
+                        settings.getString(BatchIntegrationConfig.APIKEY_KEY)
                 );
 
                 config.canUseAdvertisingID = settings.getBoolean(BatchIntegrationConfig.CAN_USE_ADVERTISING_ID_KEY, BatchIntegrationConfig.DEFAULT_CAN_USE_ADVERTISING_ID);

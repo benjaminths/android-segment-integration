@@ -8,8 +8,8 @@ public class BatchIntegrationConfig
 {
     private static final String PREFERENCES_NAME = "batchSegmentPreferences";
 
-    public static final String BATCH_API_KEY = "apiKey";
-    public static final String GCM_SENDER_ID_KEY = "gcmSenderId";
+    public static final String APIKEY_KEY = "apiKey";
+    public static final String GCM_SENDER_ID_KEY = "gcmSenderID";
     public static final String CAN_USE_ADVERTISING_ID_KEY = "canUseAdvertisingID";
     public static final String CAN_USE_ADVANCED_DEVICE_INFO_KEY = "canUseAdvancedDeviceInformation";
 
@@ -32,7 +32,7 @@ public class BatchIntegrationConfig
     {
         SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         BatchIntegrationConfig config = new BatchIntegrationConfig(
-                preferences.getString(BATCH_API_KEY, null)
+                preferences.getString(APIKEY_KEY, null)
         );
         config.gcmSenderID = preferences.getString(GCM_SENDER_ID_KEY, null);
         config.canUseAdvertisingID = preferences.getBoolean(CAN_USE_ADVERTISING_ID_KEY, config.canUseAdvertisingID);
@@ -67,7 +67,7 @@ public class BatchIntegrationConfig
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE).edit()
                 .putBoolean(CAN_USE_ADVERTISING_ID_KEY, canUseAdvertisingID)
                 .putBoolean(CAN_USE_ADVANCED_DEVICE_INFO_KEY, canUseAdvancedDeviceInformation)
-                .putString(BATCH_API_KEY, apiKey)
+                .putString(APIKEY_KEY, apiKey)
                 .putString(GCM_SENDER_ID_KEY, gcmSenderID)
                 .apply();
     }
