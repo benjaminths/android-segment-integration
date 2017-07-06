@@ -27,10 +27,17 @@ public class BatchIntegration extends Integration
     public static final String BATCH_KEY = "Batch.com";
 
     private static final String LOGGER_TAG = "BatchSegmentIntegration";
+
+    private static final String PLUGIN_VERSION = "Segment/1.0";
     
     private static boolean didSetBatchConfig = false;
 
     private Logger logger;
+
+    static
+    {
+        System.setProperty("batch.plugin.version", PLUGIN_VERSION);
+    }
 
     public static Factory getFactory(Context context)
     {
