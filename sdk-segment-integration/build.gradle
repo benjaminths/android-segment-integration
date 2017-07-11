@@ -21,18 +21,27 @@ android {
     }
 }
 
+def powerMockVersion = "1.6.4"
+def segmentAnalyticsVersion = "4.3.0-RC1"
+
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.3.1'
 
-    provided 'com.segment.analytics.android:analytics:4.2.6'
+    provided "com.segment.analytics.android:analytics:$segmentAnalyticsVersion"
+    testCompile "com.segment.analytics.android:analytics-tests:$segmentAnalyticsVersion"
+
     compile 'com.batch.android:batch-sdk:1.9.1'
     compile 'com.google.android.gms:play-services-base:10.2.4'
     compile 'com.google.android.gms:play-services-gcm:10.2.4'
     compile 'com.google.android.gms:play-services-ads:10.2.4'
 
     testCompile 'junit:junit:4.12'
+    testCompile "org.robolectric:robolectric:3.4-SNAPSHOT"
+    testCompile "org.powermock:powermock:$powerMockVersion"
+    testCompile "org.powermock:powermock-module-junit4:$powerMockVersion"
+    testCompile "org.powermock:powermock-module-junit4-rule:$powerMockVersion"
+    testCompile "org.powermock:powermock-api-mockito:$powerMockVersion"
+    testCompile "org.powermock:powermock-classloading-xstream:$powerMockVersion"
 }

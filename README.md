@@ -50,3 +50,12 @@ BatchIntegrationConfig.enableAutomaticLifecycleManagement = false;
 
 This will let your code fully control the configuration of the SDK, and calling of the lifecycle methods. Note that by enabling this, you will have to add Batch.onStart/onStop/onDestroy calls yourself, as indicated by Batch's documentation.
 
+## Modifying this library
+
+To contribute on this library, simply use Android Studio as you would with any project.
+
+You can run the unit tests from a CLI using:  
+```
+./gradlew clean testDebug
+``` 
+at the root of the project.

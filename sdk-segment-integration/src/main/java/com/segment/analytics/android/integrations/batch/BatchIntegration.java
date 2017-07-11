@@ -29,7 +29,7 @@ public class BatchIntegration extends Integration
     private static final String LOGGER_TAG = "BatchSegmentIntegration";
 
     private static final String PLUGIN_VERSION = "Segment/1.0";
-    
+
     private static boolean didSetBatchConfig = false;
 
     private Logger logger;
@@ -57,7 +57,7 @@ public class BatchIntegration extends Integration
                 config.canUseAdvertisingID = settings.getBoolean(BatchIntegrationConfig.CAN_USE_ADVERTISING_ID_KEY, BatchIntegrationConfig.DEFAULT_CAN_USE_ADVERTISING_ID);
                 config.canUseAdvancedDeviceInformation = settings.getBoolean(BatchIntegrationConfig.CAN_USE_ADVANCED_DEVICE_INFO_KEY, BatchIntegrationConfig.DEFAULT_CAN_USE_ADV_DEVICE_INFO);
                 config.gcmSenderID = settings.getString(BatchIntegrationConfig.GCM_SENDER_ID_KEY);
-                
+
                 config.save(appContext);
                 setupBatch(config);
 
@@ -90,13 +90,13 @@ public class BatchIntegration extends Integration
             Log.v(LOGGER_TAG, "Batch will not use the settings provided by segment, because it has been disabled by the developer.");
             return;
         }
-        
+
         if (!integrationConfig.isValid())
         {
             Log.v(LOGGER_TAG, "The configuration fetched from segment is invalid or incomplete. sBatch will not be automatically configured, and might not work properly.");
             return;
         }
-        
+
         Config config = new Config(integrationConfig.apiKey);
         config.setCanUseAdvertisingID(integrationConfig.canUseAdvertisingID);
         config.setCanUseAdvancedDeviceInformation(integrationConfig.canUseAdvancedDeviceInformation);
@@ -122,22 +122,20 @@ public class BatchIntegration extends Integration
 
         String eventName = track.event();
 
-        if (eventName == null || eventName.isEmpty())
+        if (TextUtils.isEmpty(eventName))
         {
-            String err = "Tried to track location but given location is null";
-            logger.error(new BatchSegmentIntegrationException(err), err);
+            logger.verbose("Tried to track event but eventName is null or empty");
+            return;
         }
-        else
-        {
-            eventName = formatEventName(eventName);
-            trackEvent(track, eventName);
-        }
+
+        eventName = formatEventName(eventName);
+        trackEvent(track, eventName);
     }
 
     private static String formatEventName(String name)
     {
         name = name.replaceAll("(?<!^|[A-Z])[A-Z]", "_$0");
-        name = name.replaceAll("^a-zA-Z0-9", "_");
+        name = name.replaceAll("[^a-zA-Z0-9]", "_");
         name = name.replaceAll("_+", "_");
         name = name.substring(0, Math.min(name.length(), 30));
         return name.toUpperCase(Locale.US);
@@ -148,7 +146,7 @@ public class BatchIntegration extends Integration
         double amount = track.properties().total();
 
         String currency = track.properties().currency();
-        if (currency != null && !currency.isEmpty())
+        if (!TextUtils.isEmpty(currency))
         {
             logger.verbose("Batch does not handle currency on transaction events");
         }
@@ -162,16 +160,19 @@ public class BatchIntegration extends Integration
         String label = track.properties().title();
         logger.verbose("Tracking event (name : " + eventName + ")");
 
-        JSONObject datas = new JSONObject();
+        JSONObject data = new JSONObject();
         try
         {
             Set<Map.Entry<String, Object>> entries = track.properties().entrySet();
             for (Map.Entry<String, Object> entry : entries)
             {
-                String value = entry.getValue().toString();
-                if (value != null && !value.isEmpty() && !"0".equals(value))
+                if (!entry.getKey().equals("title"))
                 {
-                    datas.put(entry.getKey(), entry.toString());
+                    Object value = entry.getValue();
+                    if (value != null && !(value instanceof String && ((String) value).isEmpty()))
+                    {
+                        data.put(entry.getKey(), entry.getValue());
+                    }
                 }
             }
         }
@@ -180,7 +181,12 @@ public class BatchIntegration extends Integration
             logger.error(ex, "Track event error");
         }
 
-        Batch.User.trackEvent(eventName, label, datas);
+        if (data.length() == 0)
+        {
+            data = null;
+        }
+
+        Batch.User.trackEvent(eventName, label, data);
 
         if (track.properties().total() != 0)
         {
@@ -194,7 +200,7 @@ public class BatchIntegration extends Integration
         logger.verbose("Identifying user");
 
         String userId = identify.userId();
-        if (userId == null || userId.isEmpty())
+        if (TextUtils.isEmpty(userId))
         {
             logger.verbose("User not identified, userId is null or empty");
             return;
@@ -219,18 +225,23 @@ public class BatchIntegration extends Integration
     {
         logger.verbose("Tracking screen event");
         final String name = screen.name();
-        if (!TextUtils.isEmpty(name))
+        if (TextUtils.isEmpty(name))
         {
-            Batch.User.trackEvent("SEGMENT_SCREEN", name);
+            logger.verbose("Screen event not tracked, screen name is null or empty");
+            return;
         }
+
+        Batch.User.trackEvent("SEGMENT_SCREEN", name);
     }
 
     @Override
     public void group(GroupPayload group)
     {
+        logger.verbose("Setting group attribute");
         String groupId = group.groupId();
-        if (groupId == null || groupId.isEmpty())
+        if (TextUtils.isEmpty(groupId))
         {
+            logger.verbose("Group not set, groupId is null or empty");
             return;
         }
 
