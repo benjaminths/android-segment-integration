@@ -38,7 +38,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-ads:10.2.4'
 
     testCompile 'junit:junit:4.12'
-    testCompile "org.robolectric:robolectric:3.4-SNAPSHOT"
+    testCompile "org.robolectric:robolectric:3.3.2"
     testCompile "org.powermock:powermock:$powerMockVersion"
     testCompile "org.powermock:powermock-module-junit4:$powerMockVersion"
     testCompile "org.powermock:powermock-module-junit4-rule:$powerMockVersion"
