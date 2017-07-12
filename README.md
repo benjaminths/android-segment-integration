@@ -50,6 +50,18 @@ BatchIntegrationConfig.enableAutomaticLifecycleManagement = false;
 
 This will let your code fully control the configuration of the SDK, and calling of the lifecycle methods. Note that by enabling this, you will have to add Batch.onStart/onStop/onDestroy calls yourself, as indicated by Batch's documentation.
 
+## Optional dependencies
+
+This library does not strictly require Google's Play Services to work, but they're recommended. If you don't add the gms libraries, notifications will not work.  
+
+We recommend you add the following to your build.gradle (version 10.2.4 is not strictly required, newer versions are compatible):  
+
+```
+compile 'com.google.android.gms:play-services-base:10.2.4'
+compile 'com.google.android.gms:play-services-gcm:10.2.4'
+compile 'com.google.android.gms:play-services-ads:10.2.4'
+```
+
 ## Modifying this library
 
 To contribute on this library, simply use Android Studio as you would with any project.

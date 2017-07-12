@@ -32,10 +32,10 @@ dependencies {
     provided "com.segment.analytics.android:analytics:$segmentAnalyticsVersion"
     testCompile "com.segment.analytics.android:analytics-tests:$segmentAnalyticsVersion"
 
-    compile 'com.batch.android:batch-sdk:1.9.1'
-    compile 'com.google.android.gms:play-services-base:10.2.4'
-    compile 'com.google.android.gms:play-services-gcm:10.2.4'
-    compile 'com.google.android.gms:play-services-ads:10.2.4'
+    compile 'com.batch.android:batch-sdk:1.9.2'
+    provided 'com.google.android.gms:play-services-base:10.2.4'
+    provided 'com.google.android.gms:play-services-gcm:10.2.4'
+    provided 'com.google.android.gms:play-services-ads:10.2.4'
 
     testCompile 'junit:junit:4.12'
     testCompile "org.robolectric:robolectric:3.3.2"
