@@ -46,3 +46,4 @@ dependencies {
     testCompile "org.powermock:powermock-classloading-xstream:$powerMockVersion"
 }
 
+apply from: 'maven.gradle'
