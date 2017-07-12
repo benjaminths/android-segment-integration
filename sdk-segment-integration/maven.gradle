@@ -1,0 +1,81 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+def propFile = project.rootProject.file("maven.properties")
+def Properties props = new Properties()
+if (propFile.exists()) {
+	props.load(propFile.newDataInputStream())
+	allprojects {
+		ext."signing.password" = props.getProperty("batch.maven.central.signing.password", "")
+        ext."signing.keyId" = props.getProperty("batch.maven.central.signing.keyid", "")
+	}
+}
+
+def signingFile = project.rootProject.file("batch-maven-secret-gpg.key")
+if (signingFile.exists()) {
+	allprojects {
+		ext."signing.secretKeyRingFile" = signingFile.getAbsolutePath()
+	}
+}
+
+afterEvaluate { project ->
+	configurations {
+		deployerJars
+	}
+
+	uploadArchives {
+		repositories {
+			mavenDeployer {
+				beforeDeployment {
+					MavenDeployment deployment -> signing.signPom(deployment)
+				}
+
+				pom.groupId = "com.batch.android"
+				pom.artifactId = "sdk-segment-integration"
+				pom.version = android.defaultConfig.versionName
+				pom.packaging = 'aar'
+
+				pom.project {
+					name "Batch.com Android Segment SDK Integration"
+					packaging "aar"
+					description "Batch.com's Segment SDK Integration main artifact"
+					url "https://batch.com"
+
+					scm {
+						url "https://github.com/BatchLabs/android-segment-integration"
+						connection "scm:git:https://github.com/BatchLabs/android-segment-integration.git"
+						developerConnection "scm:git:https://github.com/BatchLabs/android-segment-integration.git"
+					}
+
+					licenses {
+						license {
+							name "MIT"
+							distribution "repo"
+						}
+					}
+
+					developers {
+						developer {
+							id "batch-tech"
+							name "Batch.com Tech"
+						}
+					}
+				}
+
+				configuration = configurations.deployerJars
+
+				repository(url: props.getProperty("batch.maven.central.release_repo_url", "")) {
+					authentication(userName: props.getProperty("batch.maven.central.username", ""), password: props.getProperty("batch.maven.central.password", ""))
+				}
+			}
+		}
+	}
+
+	signing {
+		required { signingFile.exists() && gradle.taskGraph.hasTask("uploadArchives") }
+		sign configurations.archives
+	}
+
+	artifacts {
+	}
+}

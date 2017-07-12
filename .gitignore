@@ -6,3 +6,7 @@
 /build
 /captures
 .externalNativeBuild
+maven.properties
+batch-maven-ownertrust-gpg.txt
+batch-maven-public-gpg.key
+batch-maven-secret-gpg.key
