@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class BatchIntegration extends Integration
 {
-    public static final String BATCH_KEY = "Batch.com";
+    public static final String BATCH_KEY = "Batch";
 
     private static final String LOGGER_TAG = "BatchSegmentIntegration";
 
