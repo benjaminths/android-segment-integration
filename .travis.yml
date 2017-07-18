@@ -39,5 +39,5 @@ env:
   - ANDROID_HOME=$HOME/android-sdk
 
 script: 
-  - ./gradlew clean test --info
+  - ./gradlew clean test
   - cat sdk-segment-integration/build/test-results/testDebugUnitTest/TEST-com.segment.analytics.android.integrations.batch.BatchIntegrationTest.xml
