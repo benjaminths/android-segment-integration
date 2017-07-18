@@ -7,7 +7,7 @@ android:
     - tools
     - extra-android-m2repository
 
-before_install:
+before_script:
     - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
 script:
