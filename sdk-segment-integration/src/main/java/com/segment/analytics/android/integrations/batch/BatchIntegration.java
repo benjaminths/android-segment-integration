@@ -121,13 +121,6 @@ public class BatchIntegration extends Integration
         super.track(track);
 
         String eventName = track.event();
-
-        if (TextUtils.isEmpty(eventName))
-        {
-            logger.verbose("Tried to track event but eventName is null or empty");
-            return;
-        }
-
         eventName = formatEventName(eventName);
         trackEvent(track, eventName);
     }
