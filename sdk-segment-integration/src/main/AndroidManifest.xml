@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.segment.analytics.android.integrations.batch">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-sdk tools:overrideLibrary="com.batch.android" />
 
     <permission
         android:name="${applicationId}.permission.C2D_MESSAGE"
