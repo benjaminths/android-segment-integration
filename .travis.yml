@@ -6,10 +6,8 @@ android:
     - platform-tools
     - tools
     - extra-android-m2repository
-
-before_script:
-    - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
-
+    
 script:
+    - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
     - ./gradlew test --info
     - cat sdk-segment-integration/build/test-results/testDebugUnitTest/TEST-com.segment.analytics.android.integrations.batch.BatchIntegrationTest.xml
