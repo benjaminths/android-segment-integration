@@ -1,0 +1,12 @@
+language: android
+jdk: oraclejdk8
+android:
+  components:
+    - tools
+    - platform-tools
+    - tools
+    - extra-android-m2repository
+
+script:
+    - ./gradlew test -info
+    - cat sdk-segment-integration/build/test-results/testDebugUnitTest/TEST-com.segment.analytics.android.integrations.batch.BatchIntegrationTest.xml
