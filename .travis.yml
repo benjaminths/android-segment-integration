@@ -7,6 +7,10 @@ android:
     - tools
     - extra-android-m2repository
     
+install:
+    - yes | android update sdk -u -a -t tools
+    - yes | android update sdk -u -a -t platform-tools
+
 script:
     - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
     - ./gradlew test --info
