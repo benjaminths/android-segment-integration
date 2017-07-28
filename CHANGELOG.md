@@ -3,7 +3,7 @@ Change Log
 
 Version 1.0.1 *(2017/07/28)*
 -------------------------------------------
-*(Supports analytics-ios 3.0+)*  
+*(Supports Batch 1.9)*  
     
     * Add logs
     * Change integration key
