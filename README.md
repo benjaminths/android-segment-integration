@@ -1,6 +1,8 @@
 analytics-android-integration-batch
 ======================================
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.batch.android/sdk-segment-integration/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.batch.android/sdk-segment-integration)
+
 Batch.com integration for [analytics-android](https://github.com/segmentio/analytics-android).
 
 ## Usage
