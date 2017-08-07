@@ -42,7 +42,7 @@ Analytics.with(context).track("MyEventName", trackProperties);
 
 The sdk-segment-integration module contains the Batch integration, and the app module contains an app sample.
 
-## Integrating with other Batch features (recomended)
+## Integrating with other Batch features (recommended)
 
 If you want to use this integration, but use other Batch features than Analytics, you may want to follow the [standard integration steps](https://batch.com/doc/android/sdk-integration/initial-setup.html), and then add this line in your Application subclass, **before** any segment call:
 
