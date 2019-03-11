@@ -162,7 +162,11 @@ public class BatchIntegration extends Integration
                 if (!entry.getKey().equals("title"))
                 {
                     Object value = entry.getValue();
-                    if (value != null && !(value instanceof String && ((String) value).isEmpty()))
+                    if (value != null &&
+                            !(value instanceof String && ((String) value).isEmpty())    ||
+                            !(value instanceof Float  && ((Float)  value).isNaN())      ||
+                            !(value instanceof Double && ((Double) value).isNaN())      ||
+                            !(value instanceof Long))
                     {
                         data.put(entry.getKey(), entry.getValue());
                     }
